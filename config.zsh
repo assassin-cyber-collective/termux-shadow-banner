@@ -1,30 +1,26 @@
-# THE SHADOW custom Zsh configuration
 export TERM="xterm-256color"
 setopt prompt_subst
 autoload -Uz colors && colors
 
-# Load the user's saved banner labels for the prompt
+# Load user settings
 [[ -f "$HOME/.termux-shadow/settings" ]] && source "$HOME/.termux-shadow/settings"
 
-# Load optional existing animation
-if [[ -f "$HOME/loading.sh" ]]; then
-  bash "$HOME/loading.sh"
-fi
+# Optional existing loading animation
+if [[ -f "$HOME/loading.sh" ]]; then bash "$HOME/loading.sh"; fi
 
-# Powerlevel10k instant prompt, if present
+# Optional Powerlevel10k instant prompt
 if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
-# Load optional plugins if installed
+# Optional plugins, only load if present
 [[ -f "$HOME/.oh-my-zsh/custom/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh" ]] && source "$HOME/.oh-my-zsh/custom/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh"
 [[ -f "$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]] && source "$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 [[ -f "$HOME/.oh-my-zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh" ]] && source "$HOME/.oh-my-zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh"
 [[ -f "$HOME/.oh-my-zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]] && source "$HOME/.oh-my-zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 
-if [[ -f "$HOME/.termux-shadow/banner.sh" ]]; then
-  bash "$HOME/.termux-shadow/banner.sh"
-fi
+# Banner is separate from prompt to keep startup readable
+[[ -f "$HOME/.termux-shadow/banner.sh" ]] && bash "$HOME/.termux-shadow/banner.sh"
 
 typeset -g DIR_ENTER_TIME=${DIR_ENTER_TIME:-$(date +%s)}
 function chpwd() { DIR_ENTER_TIME=$(date +%s) }
@@ -55,6 +51,6 @@ else
   alias la='ls -A --color=auto'
 fi
 
-PROMPT='%F{242}┌──(%F{196}☣ %F{196}${EXEC_WORD_1:-THE}~⚠~${EXEC_WORD_2:-SHADOW}_ %F{39}$(dir_time_spent)%F{242})──[%F{46}$(short_path)%F{242}]
+PROMPT='%F{242}┌──(%F{196}☣ ${EXEC_WORD_1:-THE}~⚠~${EXEC_WORD_2:-SHADOW} %F{39}$(dir_time_spent)%F{242})──[%F{46}$(short_path)%F{242}]
 %F{242}│ %F{196}⌛ %F{252}$(dir_time_spent)
 %F{242}└─❯❯❯ %f'

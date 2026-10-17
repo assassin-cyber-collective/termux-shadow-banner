@@ -1,11 +1,17 @@
 #!/data/data/com.termux/files/usr/bin/bash
 set -eu
-if [ -f "$HOME/.zshrc.shadow-backup" ]; then
-  cp "$HOME/.zshrc.shadow-backup" "$HOME/.zshrc"
-  echo "✔ Restored ~/.zshrc from backup."
+BACKUP_DIR="$HOME/.termux-shadow-backups"
+if [ -f "$BACKUP_DIR/zshrc.original" ]; then
+  cp -p "$BACKUP_DIR/zshrc.original" "$HOME/.zshrc"
+  echo "[✔] Restored original ~/.zshrc"
 else
-  echo "No backup found; ~/.zshrc left unchanged."
+  echo "[!] No original .zshrc backup found; left it unchanged."
+fi
+if [ -f "$BACKUP_DIR/bashrc.original" ]; then
+  cp -p "$BACKUP_DIR/bashrc.original" "$HOME/.bashrc"
+  echo "[✔] Original ~/.bashrc backup is available at $BACKUP_DIR/bashrc.original"
 fi
 rm -rf "$HOME/.termux-shadow"
-echo "✔ Removed THE SHADOW banner files."
-echo "Installed packages and Oh My Zsh were left installed."
+echo "[✔] Removed THE SHADOW banner files."
+echo "[i] Packages and Oh My Zsh were not removed."
+echo "[i] Restart Termux to apply changes."
