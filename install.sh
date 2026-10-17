@@ -3,43 +3,64 @@ set -Eeuo pipefail
 
 REPO="assassin-cyber-collective/termux-shadow-banner"
 BRANCH="main"
-BASE="https://raw.githubusercontent.com/${REPO}/${BRANCH}"
-DEST="$HOME/.termux-shadow"
-BACKUP_DIR="$HOME/.termux-shadow-backups"
-mkdir -p "$DEST" "$BACKUP_DIR"
+RAW="https://raw.githubusercontent.com/${REPO}/${BRANCH}"
+APP="$HOME/.termux-shadow"
+BACKUPS="$HOME/.termux-shadow-backups"
+mkdir -p "$APP" "$BACKUPS"
 
-RED=$'\033[1;31m'; CYAN=$'\033[1;36m'; GREEN=$'\033[1;32m'
-YELLOW=$'\033[1;33m'; DIM=$'\033[0;90m'; RESET=$'\033[0m'
-ok(){ printf '%s[✔]%s %s\n' "$GREEN" "$RESET" "$1"; }
-step(){ printf '%s[ … ]%s %s\n' "$CYAN" "$RESET" "$1"; }
-warn(){ printf '%s[! ]%s %s\n' "$YELLOW" "$RESET" "$1"; }
-die(){ printf '%s[✘]%s %s\n' "$RED" "$RESET" "$1" >&2; exit 1; }
+R=$'\033[1;31m'; C=$'\033[1;36m'; G=$'\033[1;32m'; Y=$'\033[1;33m'; W=$'\033[1;37m'; D=$'\033[0;90m'; N=$'\033[0m'
+ok(){ printf '%s  ✔ %s%s\n' "$G" "$1" "$N"; }
+info(){ printf '%s  ◈ %s%s\n' "$C" "$1" "$N"; }
+warn(){ printf '%s  ! %s%s\n' "$Y" "$1" "$N"; }
+fail(){ printf '\n%s  ✖ %s%s\n' "$R" "$1" "$N" >&2; exit 1; }
+trap 'rc=$?; printf "\n%s  ✖ Setup stopped (code %s). Scroll up for the error.%s\n" "$R" "$rc" "$N" >&2' ERR
 
-trap 'rc=$?; printf "\n%s[✘] Setup failed (exit %s). See message above.%s\n" "$RED" "$rc" "$RESET" >&2' ERR
+[ -n "${PREFIX:-}" ] && [ -x "$PREFIX/bin/pkg" ] || fail "Open Termux and run this script inside Termux."
+command -v curl >/dev/null 2>&1 || { printf '%scurl is required to bootstrap this installer.%s\n' "$Y" "$N"; pkg update -y; pkg install -y curl || fail "Could not install curl."; }
 
 clear 2>/dev/null || true
-printf '%s╭────────────────────────────────────────────╮%s\n' "$RED" "$RESET"
-printf '%s│       THE SHADOW  /  TERMUX INSTALLER       │%s\n' "$CYAN" "$RESET"
-printf '%s╰────────────────────────────────────────────╯%s\n\n' "$RED" "$RESET"
+printf '%s╭──────────────────────────────────────────────────────────╮%s\n' "$R" "$N"
+printf '%s│%s  ◀━━━━━━━━━━ %sT E R M U X   /   T H E   S H A D O W%s ━━━━━━━━━▶  %s│%s\n' "$R" "$C" "$W" "$C" "$R" "$N"
+printf '%s╰──────────────────────────────────────────────────────────╯%s\n\n' "$R" "$N"
+printf '%s  PERSONALIZE YOUR TERMINAL%s\n\n' "$Y" "$N"
 
-[ -n "${PREFIX:-}" ] && [ -x "$PREFIX/bin/pkg" ] || die "Run this inside Termux."
+ask() {
+  local prompt="$1" val=""
+  while :; do
+    printf '%s  › %s%s ' "$C" "$prompt" "$N" > /dev/tty
+    IFS= read -r val < /dev/tty || fail "Cannot read input. Open an interactive Termux session."
+    val="${val#"${val%%[![:space:]]*}"}"
+    val="${val%"${val##*[![:space:]]}"}"
+    if [ -n "$val" ]; then printf '%s' "$val"; return; fi
+    printf '%s  Please enter a value.%s\n' "$Y" "$N" > /dev/tty
+  done
+}
+NAME="$(ask 'Name for the large title:')"
+BIO="$(ask 'Bio (one line):')"
+HEADLINE="$(ask 'Headline:')"
+WORD1="$(ask 'Execute word 1 (replaces THE):')"
+WORD2="$(ask 'Execute word 2 (replaces SHADOW):')"
 
-# Install minimal tools before using them. Show live status; never hide all output.
-step "Refreshing package lists..."
-pkg update -y || warn "Package list update had a problem; continuing to check packages."
+# Store arbitrary user text safely as shell-quoted values.
+{
+  printf 'BANNER_NAME=%q\n' "$NAME"
+  printf 'BANNER_BIO=%q\n' "$BIO"
+  printf 'BANNER_HEADLINE=%q\n' "$HEADLINE"
+  printf 'EXEC_WORD_1=%q\n' "$WORD1"
+  printf 'EXEC_WORD_2=%q\n' "$WORD2"
+} > "$APP/settings"
+chmod 600 "$APP/settings"
+ok "Personalization saved"
+
+printf '\n%s  CHECKING REQUIREMENTS%s\n' "$Y" "$N"
+pkg update -y || warn "Package list refresh failed; checking installed packages anyway."
 
 install_pkg() {
-  local package="$1" command_name="$2"
-  if command -v "$command_name" >/dev/null 2>&1; then
-    ok "$package already installed"
+  local package="$1" bin="$2"
+  if command -v "$bin" >/dev/null 2>&1; then ok "$package already installed"
   else
-    step "Installing $package..."
-    if pkg install -y "$package"; then
-      ok "$package installed"
-    else
-      warn "$package installation failed. Check network/repository and retry."
-      return 1
-    fi
+    info "Installing $package..."
+    if pkg install -y "$package"; then ok "$package installed"; else fail "Install failed: $package. Check internet/repository settings."; fi
   fi
 }
 install_pkg curl curl
@@ -47,98 +68,48 @@ install_pkg git git
 install_pkg zsh zsh
 install_pkg figlet figlet
 install_pkg eza eza
-# lolcat is optional because package availability can vary
-if ! command -v lolcat >/dev/null 2>&1; then
-  step "Trying to install optional lolcat..."
-  if pkg install -y lolcat; then ok "lolcat installed"; else warn "lolcat unavailable; banner works without it."; fi
-else
-  ok "lolcat already installed"
-fi
 if ! command -v ping >/dev/null 2>&1; then
-  step "Installing network status utility..."
-  if pkg install -y iputils; then ok "Network utility installed"; else warn "Network status may show unavailable without ping."; fi
-else
-  ok "Network utility already installed"
-fi
+  if pkg install -y iputils; then ok "Network utility installed"; else warn "ping unavailable; network status will show unknown."; fi
+else ok "Network utility already installed"; fi
 
-# Oh My Zsh needed before the shell configuration is replaced.
 if [ ! -f "$HOME/.oh-my-zsh/oh-my-zsh.sh" ]; then
-  step "Installing Oh My Zsh..."
-  if ! command -v curl >/dev/null 2>&1; then die "curl is required to install Oh My Zsh."; fi
-  RUNZSH=no CHSH=no KEEP_ZSHRC=yes \
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" || die "Oh My Zsh install failed."
+  info "Installing Oh My Zsh..."
+  RUNZSH=no CHSH=no KEEP_ZSHRC=yes sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" || fail "Oh My Zsh install failed."
   ok "Oh My Zsh installed"
-else
-  ok "Oh My Zsh already installed"
-fi
+else ok "Oh My Zsh already installed"; fi
 
-# Ask for personalization before modifying startup configuration.
-ask() {
-  local prompt="$1" value=""
-  while :; do
-    printf '%s%s%s ' "$CYAN" "$prompt" "$RESET" > /dev/tty
-    IFS= read -r value < /dev/tty || die "Could not read terminal input."
-    value="${value#"${value%%[![:space:]]*}"}"
-    value="${value%"${value##*[![:space:]]}"}"
-    if [ -n "$value" ]; then printf '%s' "$value"; return 0; fi
-    printf '%sPlease enter a value.%s\n' "$YELLOW" "$RESET" > /dev/tty
-  done
-}
-printf '\n%sPersonalize your terminal%s\n' "$YELLOW" "$RESET"
-NAME="$(ask 'Name for the big banner:')"
-BIO="$(ask 'Bio (one line):')"
-HEADLINE="$(ask 'Headline:')"
-EXEC1="$(ask 'Execute — first word (replaces THE):')"
-EXEC2="$(ask 'Execute — second word (replaces SHADOW):')"
-
-# Safe shell quoting for arbitrary user text
-{
-  printf 'BANNER_NAME=%q\n' "$NAME"
-  printf 'BANNER_BIO=%q\n' "$BIO"
-  printf 'BANNER_HEADLINE=%q\n' "$HEADLINE"
-  printf 'EXEC_WORD_1=%q\n' "$EXEC1"
-  printf 'EXEC_WORD_2=%q\n' "$EXEC2"
-} > "$DEST/settings"
-
-# Download files with visible progress/status
-for file in config.zsh banner.sh; do
-  step "Downloading $file..."
-  curl --fail --location --silent --show-error "$BASE/$file" -o "$DEST/$file" || die "Download failed for $file. Verify GitHub repo, branch, and files."
-  ok "$file downloaded"
+# Download config files from this repository. This avoids assumptions about the clone folder.
+for f in config.zsh banner.sh; do
+  info "Downloading $f..."
+  curl --fail --location --silent --show-error "$RAW/$f" -o "$APP/$f" || fail "Could not download $f from $RAW/$f. Ensure it exists in the repository root on branch $BRANCH."
+  ok "$f ready"
 done
-chmod 700 "$DEST/settings"
-chmod 700 "$DEST/banner.sh"
+chmod 700 "$APP/banner.sh"
 
-# Back up current shell startup files, once per install
-for rc in "$HOME/.bashrc" "$HOME/.zshrc" "$HOME/.bash_profile" "$HOME/.profile"; do
-  if [ -f "$rc" ] && [ ! -f "$BACKUP_DIR/$(basename "$rc").original" ]; then
-    cp -p "$rc" "$BACKUP_DIR/$(basename "$rc").original"
-    ok "Backed up $(basename "$rc")"
+# Back up all startup files once. Keep old files intact; do not destructively edit other setups.
+for f in .bashrc .bash_profile .profile .zshrc; do
+  if [ -f "$HOME/$f" ] && [ ! -f "$BACKUPS/$f.original" ]; then
+    cp -p "$HOME/$f" "$BACKUPS/$f.original"
+    ok "Backed up $f"
   fi
 done
 
-# Remove older blocks from this project, then write clean zsh startup.
-# Keep old files in backups rather than destructively deleting them.
-cat > "$HOME/.zshrc" <<'ZSHRC_EOF'
+cat > "$HOME/.zshrc" <<'ZSHRC'
 export ZSH="$HOME/.oh-my-zsh"
 ZSH_THEME=""
 plugins=(git)
 [[ -f "$ZSH/oh-my-zsh.sh" ]] && source "$ZSH/oh-my-zsh.sh"
 [[ -f "$HOME/.termux-shadow/config.zsh" ]] && source "$HOME/.termux-shadow/config.zsh"
-ZSHRC_EOF
-ok "Created clean ~/.zshrc"
+ZSHRC
+ok "Zsh startup configured"
 
-# Switch default shell to Zsh if chsh is available; preserve backups.
 if command -v chsh >/dev/null 2>&1; then
-  if [ "${SHELL##*/}" != "zsh" ]; then
-    step "Switching default shell to Zsh..."
-    if chsh -s zsh; then ok "Default shell set to Zsh"; else warn "Could not change default shell automatically; run: chsh -s zsh"; fi
-  else
-    ok "Zsh is already the default shell"
-  fi
+  if chsh -s zsh >/dev/null 2>&1; then ok "Default shell set to Zsh"; else warn "Could not change default shell automatically; run: chsh -s zsh"; fi
 fi
 
-printf '\n%s[✔] INSTALLATION COMPLETE%s\n' "$GREEN" "$RESET"
-printf '%sYour original startup files are backed up in:%s %s\n' "$DIM" "$RESET" "$BACKUP_DIR"
-printf '%sStarting Zsh now...%s\n\n' "$CYAN" "$RESET"
+printf '\n%s╭──────────────────────────────────────────╮%s\n' "$G" "$N"
+printf '%s│  ✔ INSTALLATION COMPLETE                 │%s\n' "$G" "$N"
+printf '%s╰──────────────────────────────────────────╯%s\n' "$G" "$N"
+printf '  Backup location: %s\n' "$BACKUPS"
+printf '  Starting Zsh...\n\n'
 exec zsh -l

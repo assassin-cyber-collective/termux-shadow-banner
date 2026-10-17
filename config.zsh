@@ -2,24 +2,17 @@ export TERM="xterm-256color"
 setopt prompt_subst
 autoload -Uz colors && colors
 
-# Load user settings
 [[ -f "$HOME/.termux-shadow/settings" ]] && source "$HOME/.termux-shadow/settings"
 
-# Optional existing loading animation
-if [[ -f "$HOME/loading.sh" ]]; then bash "$HOME/loading.sh"; fi
+# Optional loading script from the user's existing setup.
+[[ -f "$HOME/loading.sh" ]] && bash "$HOME/loading.sh"
 
-# Optional Powerlevel10k instant prompt
-if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
-  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
-fi
-
-# Optional plugins, only load if present
+# Optional Zsh plugins, if already present.
 [[ -f "$HOME/.oh-my-zsh/custom/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh" ]] && source "$HOME/.oh-my-zsh/custom/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh"
 [[ -f "$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]] && source "$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 [[ -f "$HOME/.oh-my-zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh" ]] && source "$HOME/.oh-my-zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh"
 [[ -f "$HOME/.oh-my-zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]] && source "$HOME/.oh-my-zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 
-# Banner is separate from prompt to keep startup readable
 [[ -f "$HOME/.termux-shadow/banner.sh" ]] && bash "$HOME/.termux-shadow/banner.sh"
 
 typeset -g DIR_ENTER_TIME=${DIR_ENTER_TIME:-$(date +%s)}
@@ -31,12 +24,9 @@ function dir_time_spent() {
 }
 function short_path() {
   local p="$PWD"
-  if [[ "$p" == "$HOME" ]]; then
-    print -n "⌂"
-  elif [[ "$p" == "$HOME/"* ]]; then
-    print -n "⌂ » ${p#$HOME/}"
-  else
-    print -n "▸ $p"
+  if [[ "$p" == "$HOME" ]]; then print -n "~"
+  elif [[ "$p" == "$HOME/"* ]]; then print -n "~/${p#$HOME/}"
+  else print -n "$p"
   fi
 }
 
@@ -51,6 +41,5 @@ else
   alias la='ls -A --color=auto'
 fi
 
-PROMPT='%F{242}┌──(%F{196}☣ ${EXEC_WORD_1:-THE}~⚠~${EXEC_WORD_2:-SHADOW} %F{39}$(dir_time_spent)%F{242})──[%F{46}$(short_path)%F{242}]
-%F{242}│ %F{196}⌛ %F{252}$(dir_time_spent)
-%F{242}└─❯❯❯ %f'
+PROMPT='%F{196}╭─[☣ ${EXEC_WORD_1:-THE}~${EXEC_WORD_2:-SHADOW}] %F{39}$(date +%H:%M)%F{242} [%F{46}$(short_path)%F{242}]
+%F{39}╰─❯❯❯ %f'

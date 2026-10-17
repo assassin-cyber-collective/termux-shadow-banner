@@ -1,32 +1,22 @@
-# THE SHADOW — Termux Banner (Fixed)
+# THE SHADOW — Termux Banner
 
-Mobile-friendly Zsh setup with a red/cyan banner, network status, personalized labels, directory timer, and Eza icons.
+A red/cyan typography-focused Termux prompt setup. No background image and no hooded-person ASCII art.
 
-## Upload
-Create a public repository named `termux-shadow-banner`, then upload all five files to the root:
-`install.sh`, `config.zsh`, `banner.sh`, `uninstall.sh`, `README.md`.
+## Install
+Upload every file in this folder to the root of the public GitHub repository `assassin-cyber-collective/termux-shadow-banner`, on the `main` branch.
 
-In `install.sh`, replace `YOUR_GITHUB_USERNAME` with your GitHub username. Commit to `main`.
-
-## One command
+Run in Termux:
 ```bash
-curl -fsSL https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/termux-shadow-banner/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/assassin-cyber-collective/termux-shadow-banner/main/install.sh | bash
 ```
 
-The installer:
-- Installs/checks packages and shows live status messages.
-- Asks for Name, Bio, Headline, and two Execute words.
-- Backs up existing `.bashrc`, `.zshrc`, `.bash_profile`, and `.profile` before changing startup config.
-- Writes a clean `.zshrc` for this setup and attempts to set Zsh as the default shell.
-- Leaves backups under `~/.termux-shadow-backups`.
+The installer asks for Name, Bio, Headline, and two Execute words before installing packages. It uses `/dev/tty` for interactive answers, then prints package/download progress. Existing shell startup files are backed up to `~/.termux-shadow-backups/` before `.zshrc` is configured.
 
-## Notes
-- A network connection is required.
-- File icons use `eza`; a Nerd Font is recommended for the broadest icon coverage.
-- Existing startup files are backed up, not deleted. This installer cannot safely identify and remove every third-party banner from every arbitrary shell file.
-- Review the scripts before running them.
+## Icons
+`eza` is installed for icons in `ls`, `ll`, `la`, and `tree`. Icon glyphs depend on the terminal font. If glyphs appear as boxes, choose a Nerd Font in Termux font settings; not every Android font contains Nerd Font icons.
 
-## Uninstall
-```bash
-curl -fsSL https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/termux-shadow-banner/main/uninstall.sh | bash
-```
+## Files
+- `install.sh` — interactive installer
+- `config.zsh` — prompt, aliases, and startup config
+- `banner.sh` — red/cyan title banner
+- `uninstall.sh` — remove banner and restore `.zshrc` if backed up
