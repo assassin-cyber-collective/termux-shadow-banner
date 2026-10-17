@@ -1,7 +1,7 @@
 #!/data/data/com.termux/files/usr/bin/bash
 set -Eeuo pipefail
 
-REPO="YOUR_GITHUB_USERNAME/termux-shadow-banner"
+REPO="assassin-cyber-collective/termux-shadow-banner"
 BRANCH="main"
 BASE="https://raw.githubusercontent.com/${REPO}/${BRANCH}"
 DEST="$HOME/.termux-shadow"
