@@ -45,7 +45,6 @@ pkg update -y || warn 'pkg update failed.'
 install_package(){ local p="$1" c="$2"; if command -v "$c" >/dev/null 2>&1; then ok "$p installed"; else info "Installing $p..."; pkg install -y "$p" || fail "Failed to install $p."; ok "$p installed"; fi; }
 install_package curl curl; install_package zsh zsh; install_package figlet figlet; install_package eza eza; install_package git git; install_package ruby ruby; install_package lolcat lolcat
 
-# Nerd Font Auto-Installer
 info "Installing Nerd Font automatically..."
 mkdir -p "$HOME/.termux"
 FONT_URL="https://github.com/ryanoasis/nerd-fonts/raw/master/patched-fonts/JetBrainsMono/Regular/complete/JetBrains%20Mono%20Nerd%20Font%20Complete.ttf"
@@ -58,16 +57,15 @@ for f in config.zsh banner.sh; do
   ok "$f downloaded"; 
 done
 
-# .zshrc থেকে ব্যানার ও অন্যান্য ডুপ্লিকেট কোড মুছে ফেলা
+# .zshrc সম্পূর্ণ পরিষ্কার করা (ডুপ্লিকেট সমস্যা স্থায়ীভাবে সমাধানের জন্য)
 ZRC="$HOME/.zshrc"
 if [ -f "$ZRC" ]; then 
   cp -p "$ZRC" "$BACKUP/.zshrc"
-  # পুরনো সব কনফিগ মুছে ফেলা হচ্ছে
+  # শুধুমাত্র ম্যানেজড ব্লকগুলো মুছে ফেলা হচ্ছে, আপনার অন্যান্য সেটিংস থাকবে
   sed '/# >>> THE-SHADOW-MANAGED >>>/,/# <<< THE-SHADOW-MANAGED <<</d' "$ZRC" > "$ZRC.tmp"
   sed '/# >>> THE-SHADOW >>/,/# <<< THE-SHADOW <<</d' "$ZRC.tmp" > "$ZRC.tmp2"
-  # figlet বা lolcat দিয়ে ব্যানার কল করার পুরনো লাইনগুলোও মুছে ফেলা
-  grep -v -E 'banner.sh|figlet|loading.sh' "$ZRC.tmp2" > "$ZRC"
-  rm -f "$ZRC.tmp" "$ZRC.tmp2"
+  mv "$ZRC.tmp2" "$ZRC"
+  rm -f "$ZRC.tmp"
 fi
 
 cat >> "$ZRC" <<'BLOCK'
@@ -83,4 +81,3 @@ if [ "${SHELL##*/}" != zsh ]; then
 fi
 
 printf '\n%sSetup complete!%s\n' "$GREEN" "$RESET"
-printf 'Please type %sexit%s and REOPEN Termux app.\n' "$YELLOW" "$RESET"
