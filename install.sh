@@ -18,66 +18,82 @@ printf '%s╰──────────────────────�
 ask(){ local prompt="$1" value=''; while true; do printf '%s%s%s ' "$CYAN" "$prompt" "$RESET" >/dev/tty; IFS= read -r value </dev/tty || fail 'Could not read terminal input.'; value="${value#"${value%%[![:space:]]*}"}"; value="${value%"${value##*[![:space:]]}"}"; if [ -n "$value" ]; then printf '%s' "$value"; return; fi; printf '%sPlease enter a value.%s\n' "$YELLOW" "$RESET" >/dev/tty; done; }
 
 printf '%sPersonalize your terminal%s\n' "$YELLOW" "$RESET"
-NAME="$(ask 'Name for the big banner (e.g. MARK): ')"
-BIO1="$(ask 'Bio — line 1: ')"
-BIO2="$(ask 'Bio — line 2: ')"
-HEADLINE="$(ask 'Headline (replaces We aRe ThE MuSk): ')"
-EXEC1="$(ask 'Prompt first word (e.g. THE): ')"
-EXEC2="$(ask 'Prompt second word (e.g. SHADOW): ')"
+NAME="$(ask 'Name for the big banner:')"
+BIO1="$(ask 'Bio — line 1:')"
+BIO2="$(ask 'Bio — line 2:')"
+HEADLINE="$(ask 'Headline (replaces We aRe ThE MuSk):')"
+EXEC1="$(ask 'Prompt first word (replaces THE):')"
+EXEC2="$(ask 'Prompt second word (replaces SHADOW):')"
 
 DEST="$HOME/.termux-shadow"
 BACKUP="$HOME/.termux-shadow-backups/$(date +%Y%m%d-%H%M%S)"
 mkdir -p "$DEST" "$BACKUP"
 
-{ 
-  printf 'BANNER_NAME=%q\n' "$NAME"
-  printf 'BANNER_BIO1=%q\n' "$BIO1"
-  printf 'BANNER_BIO2=%q\n' "$BIO2"
-  printf 'BANNER_HEADLINE=%q\n' "$HEADLINE"
-  printf 'PROMPT_WORD_1=%q\n' "$EXEC1"
-  printf 'PROMPT_WORD_2=%q\n' "$EXEC2"
-} > "$DEST/settings"
+{ printf 'BANNER_NAME=%q\n' "$NAME"; printf 'BANNER_BIO1=%q\n' "$BIO1"; printf 'BANNER_BIO2=%q\n' "$BIO2"; printf 'BANNER_HEADLINE=%q\n' "$HEADLINE"; printf 'PROMPT_WORD_1=%q\n' "$EXEC1"; printf 'PROMPT_WORD_2=%q\n' "$EXEC2"; } > "$DEST/settings"
 chmod 600 "$DEST/settings"
 ok 'Personal settings saved'
 
-printf '\n%sChecking requirements%s\n' "$YELLOW" "$RESET"
-pkg update -y || warn 'pkg update failed.'
-install_package(){ local p="$1" c="$2"; if command -v "$c" >/dev/null 2>&1; then ok "$p installed"; else info "Installing $p..."; pkg install -y "$p" || fail "Failed to install $p."; ok "$p installed"; fi; }
-install_package curl curl; install_package zsh zsh; install_package figlet figlet; install_package eza eza; install_package git git; install_package ruby ruby; install_package lolcat lolcat
+printf '\n%sChecking and installing requirements%s\n' "$YELLOW" "$RESET"
+pkg update -y || warn 'pkg update failed; checking package installs anyway.'
 
-info "Installing Nerd Font automatically..."
+install_package(){ local p="$1" c="$2"; if command -v "$c" >/dev/null 2>&1; then ok "$p already installed"; else info "Installing $p..."; pkg install -y "$p" || fail "Could not install $p."; command -v "$c" >/dev/null 2>&1 || fail "$c still missing after installing $p"; ok "$p installed"; fi; }
+
+install_package curl curl; 
+install_package zsh zsh; 
+install_package figlet figlet; 
+install_package eza eza; 
+install_package git git
+install_package unzip unzip
+
+# ----------------- Nerd Font অটোমেটিক ইনস্টল -----------------
+info "Installing Nerd Font automatically for icons..."
 mkdir -p "$HOME/.termux"
-FONT_URL="https://github.com/ryanoasis/nerd-fonts/raw/master/patched-fonts/JetBrainsMono/Regular/complete/JetBrains%20Mono%20Nerd%20Font%20Complete.ttf"
-curl -fL --retry 3 --connect-timeout 15 "$FONT_URL" -o "$HOME/.termux/font.ttf" || warn "Font download failed."
-if [ -f "$HOME/.termux/font.ttf" ]; then termux-reload-settings; ok "Font installed."; fi
+FONT_URL="https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip"
+TMP_DIR=$(mktemp -d)
+
+curl -fL --retry 3 --connect-timeout 15 "$FONT_URL" -o "$TMP_DIR/JetBrainsMono.zip" || warn "Font download failed."
+if [ -f "$TMP_DIR/JetBrainsMono.zip" ]; then
+  unzip -o "$TMP_DIR/JetBrainsMono.zip" -d "$TMP_DIR/font" >/dev/null 2>&1
+  cp "$TMP_DIR/font/JetBrainsMonoNerdFontMono-Regular.ttf" "$HOME/.termux/font.ttf"
+  termux-reload-settings
+  ok "Nerd Font installed successfully."
+fi
+rm -rf "$TMP_DIR"
+# -------------------------------------------------------------
 
 for f in config.zsh banner.sh; do 
   info "Downloading $f..."; 
-  curl -fL --retry 2 --connect-timeout 15 "$REPO_RAW/$f" -o "$DEST/$f" || fail "Download failed for $f."; 
+  curl -fL --retry 2 --connect-timeout 15 "$REPO_RAW/$f" -o "$DEST/$f" || fail "Download failed for $f. Ensure the file is at the repository root on main."; 
   ok "$f downloaded"; 
 done
+chmod 700 "$DEST/banner.sh"
 
-# .zshrc সম্পূর্ণ পরিষ্কার করা (ডুপ্লিকেট সমস্যা স্থায়ীভাবে সমাধানের জন্য)
+# পুরনো কনফিগ ব্যাকআপ নেওয়া
+for rc in "$HOME/.zshrc" "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.profile"; do 
+  if [ -f "$rc" ]; then cp -p "$rc" "$BACKUP/$(basename "$rc")"; ok "Backed up $(basename "$rc")"; fi; 
+done
+
+# .zshrc থেকে পুরনো THE-SHADOW ব্লক মুছে ফেলা (ডুপ্লিকেট ঠিক করতে)
 ZRC="$HOME/.zshrc"
 if [ -f "$ZRC" ]; then 
-  cp -p "$ZRC" "$BACKUP/.zshrc"
-  # শুধুমাত্র ম্যানেজড ব্লকগুলো মুছে ফেলা হচ্ছে, আপনার অন্যান্য সেটিংস থাকবে
   sed '/# >>> THE-SHADOW-MANAGED >>>/,/# <<< THE-SHADOW-MANAGED <<</d' "$ZRC" > "$ZRC.tmp"
   sed '/# >>> THE-SHADOW >>/,/# <<< THE-SHADOW <<</d' "$ZRC.tmp" > "$ZRC.tmp2"
   mv "$ZRC.tmp2" "$ZRC"
   rm -f "$ZRC.tmp"
 fi
 
+# নতুন ব্লক যোগ করা
 cat >> "$ZRC" <<'BLOCK'
 
 # >>> THE-SHADOW-MANAGED >>>
 [[ -f "$HOME/.termux-shadow/config.zsh" ]] && source "$HOME/.termux-shadow/config.zsh"
 # <<< THE-SHADOW-MANAGED <<<
 BLOCK
-ok 'Cleaned up .zshrc to prevent double banner'
+ok 'Updated .zshrc and preserved unrelated settings'
 
 if [ "${SHELL##*/}" != zsh ]; then 
-  if command -v chsh >/dev/null 2>&1 && chsh -s zsh; then ok 'Shell switched to Zsh'; else warn 'Run manually: chsh -s zsh'; fi; 
+  if command -v chsh >/dev/null 2>&1 && chsh -s zsh; then ok 'Default shell switched to Zsh'; else warn 'Could not switch automatically. Run: chsh -s zsh'; fi; 
 fi
 
-printf '\n%sSetup complete!%s\n' "$GREEN" "$RESET"
+printf '\n%sSetup complete.%s Backup: %s\n' "$GREEN" "$RESET" "$BACKUP"
+printf 'Please type %sexit%s and REOPEN Termux to apply font and settings.\n' "$YELLOW" "$RESET"
