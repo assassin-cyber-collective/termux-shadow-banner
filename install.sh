@@ -45,7 +45,7 @@ pkg update -y || warn 'pkg update failed.'
 install_package(){ local p="$1" c="$2"; if command -v "$c" >/dev/null 2>&1; then ok "$p installed"; else info "Installing $p..."; pkg install -y "$p" || fail "Failed to install $p."; ok "$p installed"; fi; }
 install_package curl curl; install_package zsh zsh; install_package figlet figlet; install_package eza eza; install_package git git; install_package ruby ruby; install_package lolcat lolcat
 
-# Nerd Font Auto-Installer (আইকন ঠিক করার জন্য)
+# Nerd Font Auto-Installer
 info "Installing Nerd Font automatically..."
 mkdir -p "$HOME/.termux"
 FONT_URL="https://github.com/ryanoasis/nerd-fonts/raw/master/patched-fonts/JetBrainsMono/Regular/complete/JetBrains%20Mono%20Nerd%20Font%20Complete.ttf"
@@ -58,16 +58,16 @@ for f in config.zsh banner.sh; do
   ok "$f downloaded"; 
 done
 
-for rc in "$HOME/.zshrc" "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.profile"; do 
-  if [ -f "$rc" ]; then cp -p "$rc" "$BACKUP/$(basename "$rc")"; ok "Backed up $(basename "$rc")"; fi; 
-done
-
+# .zshrc থেকে ব্যানার ও অন্যান্য ডুপ্লিকেট কোড মুছে ফেলা
 ZRC="$HOME/.zshrc"
 if [ -f "$ZRC" ]; then 
+  cp -p "$ZRC" "$BACKUP/.zshrc"
+  # পুরনো সব কনফিগ মুছে ফেলা হচ্ছে
   sed '/# >>> THE-SHADOW-MANAGED >>>/,/# <<< THE-SHADOW-MANAGED <<</d' "$ZRC" > "$ZRC.tmp"
   sed '/# >>> THE-SHADOW >>/,/# <<< THE-SHADOW <<</d' "$ZRC.tmp" > "$ZRC.tmp2"
-  mv "$ZRC.tmp2" "$ZRC"
-  rm -f "$ZRC.tmp"
+  # figlet বা lolcat দিয়ে ব্যানার কল করার পুরনো লাইনগুলোও মুছে ফেলা
+  grep -v -E 'banner.sh|figlet|loading.sh' "$ZRC.tmp2" > "$ZRC"
+  rm -f "$ZRC.tmp" "$ZRC.tmp2"
 fi
 
 cat >> "$ZRC" <<'BLOCK'
@@ -76,10 +76,11 @@ cat >> "$ZRC" <<'BLOCK'
 [[ -f "$HOME/.termux-shadow/config.zsh" ]] && source "$HOME/.termux-shadow/config.zsh"
 # <<< THE-SHADOW-MANAGED <<<
 BLOCK
-ok 'Fixed double banner issue in .zshrc'
+ok 'Cleaned up .zshrc to prevent double banner'
 
 if [ "${SHELL##*/}" != zsh ]; then 
   if command -v chsh >/dev/null 2>&1 && chsh -s zsh; then ok 'Shell switched to Zsh'; else warn 'Run manually: chsh -s zsh'; fi; 
 fi
 
-printf '\n%sSetup complete!%s\nPlease RESTART Termux app completely to avoid glitches.\n' "$GREEN" "$RESET"
+printf '\n%sSetup complete!%s\n' "$GREEN" "$RESET"
+printf 'Please type %sexit%s and REOPEN Termux app.\n' "$YELLOW" "$RESET"
