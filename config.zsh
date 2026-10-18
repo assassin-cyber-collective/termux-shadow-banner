@@ -3,7 +3,6 @@ setopt prompt_subst
 autoload -Uz colors && colors
 [[ -f "$HOME/.termux-shadow/settings" ]] && source "$HOME/.termux-shadow/settings"
 
-# ব্যানার শুধু একবার লোড হবে
 if [[ -f "$HOME/.termux-shadow/banner.sh" ]]; then 
     bash "$HOME/.termux-shadow/banner.sh"
 fi
@@ -22,12 +21,12 @@ function dir_time_spent() {
 
 short_path() { 
     local p=$(pwd); 
-    if [ "$p" = "$HOME" ]; then echo "⌂"; return; fi; 
+    if [ "$p" = "$HOME" ]; then echo ""; return; fi; 
     if [[ "$p" == "$HOME"* ]]; then 
         local sub="${p#$HOME/}"; 
-        if [ -z "$sub" ]; then echo "⌂"; else echo "⌂»📂${sub##/}"; fi; return; 
+        if [ -z "$sub" ]; then echo ""; else echo "${sub##/}"; fi; return; 
     fi; 
-    echo "📂${p##/}"; 
+    echo "${p##/}"; 
 }
 
 if command -v eza >/dev/null 2>&1; then
@@ -37,6 +36,7 @@ if command -v eza >/dev/null 2>&1; then
   alias tree='eza --tree --icons=always'
 fi
 
-PROMPT='%{%F{242}%}┌──(%{%F{196}%}☣ %{%F{196}%}${PROMPT_WORD_1:-THE}~⚠~${PROMPT_WORD_2:-SHADOW}_%{%F{39}%}$(dir_time_spent)%{%F{242}%})──[%{%F{46}%}$(short_path)%{%F{242}%}]
-%{%F{242}%}│ %{%F{196}%}⏳:- $(dir_time_spent)
-%{%F{242}%}└─❯❯❯ %f '
+#       
+PROMPT='%{%F{242}%}���(%{%F{196}%} %{%F{196}%}${PROMPT_WORD_1:-THE}~~${PROMPT_WORD_2:-SHADOW}_%{%F{242}%})��[%{%F{46}%}$(short_path)%{%F{242}%}]
+%{%F{242}%}� %{%F{196}%}:- $(dir_time_spent)
+%{%F{242}%}�� %f '

@@ -9,40 +9,25 @@ HEADLINE="${BANNER_HEADLINE:-We aRe ThE MuSk}"
 
 RED=$'\033[1;31m'; CYAN=$'\033[1;36m'; GREEN=$'\033[1;32m'; GRAY=$'\033[0;90m'; RESET=$'\033[0m'
 
-COLS=$(tput cols)
-if [ "$COLS" -gt 80 ]; then COLS=80; fi
-
-center_text() {
-    local text="$1"
-    local len=${#text}
-    local padding=$(( (COLS - len) / 2 ))
-    if [ "$padding" -gt 0 ]; then printf "%${padding}s" ""; fi
-    printf "%s\n" "$text"
-}
-
 clear
-echo ""
-printf '%s' "$CYAN"; center_text "━━━━━━━━━━━━━━━[ ★ ]━━━━━━━━━━━━━━━"; printf '%s' "$RESET"
-printf '%s' "$RED"; center_text "$HEADLINE"; printf '%s' "$RESET"
-echo ""
+
+printf '\n%s < ━━━━━━━━━ [★] T E R M U X [★] ━━━━━━━━━━━━ > %s\n\n' "$CYAN" "$RESET"
+printf '%s %s %s\n\n' "$RED" "$HEADLINE" "$RESET"
 
 if command -v ping >/dev/null 2>&1 && ping -c 1 -W 2 8.8.8.8 >/dev/null 2>&1; then 
-    printf '%s' " ● Network Status: "; printf '\033[1;32mONLINE\033[0m %s(Internet Active)%s\n\n' "$GRAY" "$RESET"
+    printf ' %s●%s Network Status: \033[1;32mONLINE\033[0m %s(Internet Active)%s\n\n' "$GREEN" "$RESET" "$GRAY" "$RESET"
 else 
-    printf '%s' " ● Network Status: "; printf '\033[1;31mOFFLINE\033[0m %s(Internet unavailable)%s\n\n' "$GRAY" "$RESET"
+    printf ' \033[1;31m●\033[0m Network Status: \033[1;31mOFFLINE\033[0m %s(Internet unavailable)%s\n\n' "$GRAY" "$RESET"
 fi
 
-# Figlet ASCII আর্ট (মাঝখানে)
 if command -v figlet >/dev/null 2>&1; then 
-    figlet -w "$COLS" -c -f big "$NAME" 2>/dev/null | while IFS= read -r line; do 
+    figlet -w 40 -f standard "$NAME" 2>/dev/null | while IFS= read -r line; do 
         printf '%s%s%s\n' "$RED" "$line" "$RESET"
     done
 else 
-    printf '%s' "$RED"; center_text "$NAME"; printf '%s' "$RESET"
+    printf '%s%s%s\n' "$RED" "$NAME" "$RESET"
 fi
 
-echo ""
-printf '%s' "$CYAN"; center_text "$BIO1"; printf '%s' "$RESET"
-printf '%s' "$CYAN"; center_text "$BIO2"; printf '%s' "$RESET"
-printf '%s' "$GRAY"; center_text "━━━━━━━━━━━━[ ★ ]━━━━━━━━━━━━"; printf '%s' "$RESET"
-echo ""
+printf '\n%s %s%s\n' "$CYAN" "$BIO1" "$RESET"
+printf '%s %s%s\n' "$CYAN" "$BIO2" "$RESET"
+printf '%s < ━━━━━━━━━━━ [★]~~~~~~~~~~~~~~~~~~~~~~~~~[★] ━━━━━━━━━━━━ > %s\n\n' "$GRAY" "$RESET"
