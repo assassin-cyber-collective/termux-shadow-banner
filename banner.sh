@@ -7,6 +7,14 @@ printf '\n%s < ━━━━━━━━━ [★] T E R M U X [★] ━━━━�
 printf '%s %s %s\n\n' "$RED" "$HEADLINE" "$RESET"
 if command -v ping >/dev/null 2>&1 && ping -c 1 -W 2 8.8.8.8 >/dev/null 2>&1; then printf ' %s●%s Network Status: \033[1;32mONLINE\033[0m %s(Internet Active)%s\n\n' "$GREEN" "$RESET" "$GRAY" "$RESET"; else printf ' \033[1;31m●\033[0m Network Status: \033[1;31mOFFLINE\033[0m %s(Internet unavailable)%s\n\n' "$GRAY" "$RESET"; fi
 if command -v figlet >/dev/null 2>&1; then figlet -w 40 "$NAME" 2>/dev/null | while IFS= read -r line; do printf '%s%s%s\n' "$RED" "$line" "$RESET"; done; else printf '%s%s%s\n' "$RED" "$NAME" "$RESET"; fi
-printf '\n%s %s%s\n' "$CYAN" "$BIO1" "$RESET"
-printf '%s %s%s\n' "$CYAN" "$BIO2" "$RESET"
+
+# Rainbow Bio Lines
+printf '\n'
+if declare -f print_rainbow > /dev/null; then 
+    print_rainbow " $BIO1"
+    print_rainbow " $BIO2"
+else
+    printf '%s %s%s\n%s %s%s\n' "$CYAN" "$BIO1" "$RESET" "$CYAN" "$BIO2" "$RESET"
+fi
+
 printf '%s < ━━━━━━━━━━━ [★]~~~~~~~~~~~~~~~~~~~~~~~~~[★] ━━━━━━━━━━━━ > %s\n\n' "$GRAY" "$RESET"
