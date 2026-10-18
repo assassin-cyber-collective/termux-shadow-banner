@@ -15,7 +15,6 @@ printf '%s╭──────────────────────�
 printf '%s│          THE SHADOW • TERMUX SETUP           │%s\n' "$CYAN" "$RESET"
 printf '%s╰──────────────────────────────────────────────╯%s\n\n' "$RED" "$RESET"
 
-# ইউজারের কাছ থেকে ডিটেইলস নেওয়া
 ask(){ local prompt="$1" value=''; while true; do printf '%s%s%s ' "$CYAN" "$prompt" "$RESET" >/dev/tty; IFS= read -r value </dev/tty || fail 'Could not read terminal input.'; value="${value#"${value%%[![:space:]]*}"}"; value="${value%"${value##*[![:space:]]}"}"; if [ -n "$value" ]; then printf '%s' "$value"; return; fi; printf '%sPlease enter a value.%s\n' "$YELLOW" "$RESET" >/dev/tty; done; }
 
 printf '%sPersonalize your terminal%s\n' "$YELLOW" "$RESET"
@@ -23,8 +22,8 @@ NAME="$(ask 'Name for the big banner (e.g. MARK): ')"
 BIO1="$(ask 'Bio — line 1: ')"
 BIO2="$(ask 'Bio — line 2: ')"
 HEADLINE="$(ask 'Headline (replaces We aRe ThE MuSk): ')"
-EXEC1="$(ask 'Prompt first word (replaces THE): ')"
-EXEC2="$(ask 'Prompt second word (replaces SHADOW): ')"
+EXEC1="$(ask 'Prompt first word (e.g. THE): ')"
+EXEC2="$(ask 'Prompt second word (e.g. SHADOW): ')"
 
 DEST="$HOME/.termux-shadow"
 BACKUP="$HOME/.termux-shadow-backups/$(date +%Y%m%d-%H%M%S)"
@@ -41,38 +40,17 @@ mkdir -p "$DEST" "$BACKUP"
 chmod 600 "$DEST/settings"
 ok 'Personal settings saved'
 
-printf '\n%sChecking and installing requirements%s\n' "$YELLOW" "$RESET"
-pkg update -y || warn 'pkg update failed; checking package installs anyway.'
+printf '\n%sChecking requirements%s\n' "$YELLOW" "$RESET"
+pkg update -y || warn 'pkg update failed.'
+install_package(){ local p="$1" c="$2"; if command -v "$c" >/dev/null 2>&1; then ok "$p installed"; else info "Installing $p..."; pkg install -y "$p" || fail "Failed to install $p."; ok "$p installed"; fi; }
+install_package curl curl; install_package zsh zsh; install_package figlet figlet; install_package eza eza; install_package git git
 
-install_package(){ 
-  local p="$1" c="$2"; 
-  if command -v "$c" >/dev/null 2>&1; then 
-    ok "$p already installed"; 
-  else 
-    info "Installing $p..."; 
-    pkg install -y "$p" || fail "Could not install $p."; 
-    ok "$p installed"; 
-  fi; 
-}
-
-install_package curl curl; 
-install_package zsh zsh; 
-install_package figlet figlet; 
-install_package eza eza; 
-install_package git git
-
-# ---------------------------------------------------------
-# Nerd Font Auto-Installer (কোনো মেনু ছাড়াই ব্যাকগ্রাউন্ডে ইনস্টল হবে)
-# ---------------------------------------------------------
-info "Installing Nerd Font automatically in background..."
+# Nerd Font Auto-Installer (আইকন ঠিক করার জন্য)
+info "Installing Nerd Font automatically..."
 mkdir -p "$HOME/.termux"
 FONT_URL="https://github.com/ryanoasis/nerd-fonts/raw/master/patched-fonts/JetBrainsMono/Regular/complete/JetBrains%20Mono%20Nerd%20Font%20Complete.ttf"
-curl -fL --retry 3 --connect-timeout 15 "$FONT_URL" -o "$HOME/.termux/font.ttf" || warn "Font download failed. Icons might not show."
-if [ -f "$HOME/.termux/font.ttf" ]; then
-  termux-reload-settings
-  ok "Nerd Font installed and applied successfully."
-fi
-# ---------------------------------------------------------
+curl -fL --retry 3 --connect-timeout 15 "$FONT_URL" -o "$HOME/.termux/font.ttf" || warn "Font download failed."
+if [ -f "$HOME/.termux/font.ttf" ]; then termux-reload-settings; ok "Font installed."; fi
 
 for f in config.zsh banner.sh; do 
   info "Downloading $f..."; 
@@ -82,10 +60,7 @@ done
 chmod 700 "$DEST/banner.sh"
 
 for rc in "$HOME/.zshrc" "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.profile"; do 
-  if [ -f "$rc" ]; then 
-    cp -p "$rc" "$BACKUP/$(basename "$rc")"; 
-    ok "Backed up $(basename "$rc")"; 
-  fi; 
+  if [ -f "$rc" ]; then cp -p "$rc" "$BACKUP/$(basename "$rc")"; ok "Backed up $(basename "$rc")"; fi; 
 done
 
 ZRC="$HOME/.zshrc"
@@ -102,15 +77,10 @@ cat >> "$ZRC" <<'BLOCK'
 [[ -f "$HOME/.termux-shadow/config.zsh" ]] && source "$HOME/.termux-shadow/config.zsh"
 # <<< THE-SHADOW-MANAGED <<<
 BLOCK
-ok 'Updated .zshrc (Fixed double banner issue)'
+ok 'Fixed double banner issue in .zshrc'
 
 if [ "${SHELL##*/}" != zsh ]; then 
-  if command -v chsh >/dev/null 2>&1 && chsh -s zsh; then 
-    ok 'Default shell switched to Zsh'; 
-  else 
-    warn 'Could not switch automatically. Run: chsh -s zsh'; 
-  fi; 
+  if command -v chsh >/dev/null 2>&1 && chsh -s zsh; then ok 'Shell switched to Zsh'; else warn 'Run manually: chsh -s zsh'; fi; 
 fi
 
-printf '\n%sSetup complete.%s Backup: %s\nStarting Zsh...\n' "$GREEN" "$RESET" "$BACKUP"
-exec zsh -l
+printf '\n%sSetup complete!%s\nPlease RESTART Termux app completely to avoid glitches.\n' "$GREEN" "$RESET"

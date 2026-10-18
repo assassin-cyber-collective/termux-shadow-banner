@@ -14,7 +14,6 @@ GRAY=$'\033[0;90m'
 RESET=$'\033[0m'
 
 printf '\n%s < ━━━━━━━━━ [★] T E R M U X [★] ━━━━━━━━━━━━ > %s\n\n' "$CYAN" "$RESET"
-
 printf '%s %s %s\n\n' "$RED" "$HEADLINE" "$RESET"
 
 if command -v ping >/dev/null 2>&1 && ping -c 1 -W 2 8.8.8.8 >/dev/null 2>&1; then 
@@ -23,7 +22,6 @@ else
     printf ' \033[1;31m●\033[0m Network Status: \033[1;31mOFFLINE\033[0m %s(Internet unavailable)%s\n\n' "$GRAY" "$RESET"
 fi
 
-# ASCII আর্ট (মাঝখানে আনার জন্য প্যাডিং সহ)
 if command -v figlet >/dev/null 2>&1; then 
     FIGLET_OUTPUT=$(figlet -f slant -w 40 "$NAME" 2>/dev/null)
     if [ -n "$FIGLET_OUTPUT" ]; then

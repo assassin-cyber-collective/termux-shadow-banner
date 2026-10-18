@@ -2,10 +2,11 @@ export TERM="xterm-256color"
 setopt prompt_subst
 autoload -Uz colors && colors
 [[ -f "$HOME/.termux-shadow/settings" ]] && source "$HOME/.termux-shadow/settings"
-if [[ -f "$HOME/loading.sh" ]]; then bash "$HOME/loading.sh"; fi
 
-#     
-[[ -f "$HOME/.termux-shadow/banner.sh" ]] && bash "$HOME/.termux-shadow/banner.sh"
+#     
+if [[ -f "$HOME/.termux-shadow/banner.sh" ]]; then 
+    bash "$HOME/.termux-shadow/banner.sh"
+fi
 
 [[ -f "$HOME/.oh-my-zsh/oh-my-zsh.sh" ]] && { export ZSH="$HOME/.oh-my-zsh"; ZSH_THEME=""; plugins=(git); source "$ZSH/oh-my-zsh.sh"; }
 [[ -f "$HOME/.oh-my-zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh" ]] && source "$HOME/.oh-my-zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh"
@@ -33,6 +34,7 @@ if command -v eza >/dev/null 2>&1; then
   alias tree='eza --tree --icons=always'
 fi
 
+#     
 PROMPT='%{%F{242}%}(%{%F{196}%} %{%F{196}%}${PROMPT_WORD_1:-THE}~~${PROMPT_WORD_2:-SHADOW}_%{%F{39}%}$(dir_time_spent)%{%F{242}%})[%{%F{46}%}$(short_path)%{%F{242}%}]
 %{%F{242}%} %{%F{196}%}:- $(dir_time_spent)
-%{%F{242}%} %f '
+%{%F{242}%}%{%F{196}%} %f '
