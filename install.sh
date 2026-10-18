@@ -43,7 +43,7 @@ ok 'Personal settings saved'
 printf '\n%sChecking requirements%s\n' "$YELLOW" "$RESET"
 pkg update -y || warn 'pkg update failed.'
 install_package(){ local p="$1" c="$2"; if command -v "$c" >/dev/null 2>&1; then ok "$p installed"; else info "Installing $p..."; pkg install -y "$p" || fail "Failed to install $p."; ok "$p installed"; fi; }
-install_package curl curl; install_package zsh zsh; install_package figlet figlet; install_package eza eza; install_package git git
+install_package curl curl; install_package zsh zsh; install_package figlet figlet; install_package eza eza; install_package git git; install_package ruby ruby; install_package lolcat lolcat
 
 # Nerd Font Auto-Installer (আইকন ঠিক করার জন্য)
 info "Installing Nerd Font automatically..."
@@ -57,7 +57,6 @@ for f in config.zsh banner.sh; do
   curl -fL --retry 2 --connect-timeout 15 "$REPO_RAW/$f" -o "$DEST/$f" || fail "Download failed for $f."; 
   ok "$f downloaded"; 
 done
-chmod 700 "$DEST/banner.sh"
 
 for rc in "$HOME/.zshrc" "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.profile"; do 
   if [ -f "$rc" ]; then cp -p "$rc" "$BACKUP/$(basename "$rc")"; ok "Backed up $(basename "$rc")"; fi; 
