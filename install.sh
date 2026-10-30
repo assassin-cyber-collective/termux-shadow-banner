@@ -42,8 +42,33 @@ ok 'Personal settings saved'
 # 3. Install Requirements
 printf '\n%sChecking requirements%s\n' "$YELLOW" "$RESET"
 pkg update -y >/dev/null 2>&1 || warn 'pkg update failed; proceeding anyway.'
-install_package(){ local p="$1" c="$2"; if command -v "$c" >/dev/null 2>&1; then ok "$p installed"; else info "Installing $p..."; pkg install -y "$p" >/dev/null 2>&1 || fail "Could not install $p."; command -v "$c" >/dev/null 2>&1 || fail "$c missing."; ok "$p installed"; fi; }
-install_package wget wget; install_package zsh zsh; install_package figlet figlet; install_package eza eza; install_package git git; install_package unzip unzip
+install_package(){ local p="$1" c="$2"; if command -v "$c" >/dev/null 2>&1; then ok "$p installed"; else info "Installing $p..."; pkg install -y "$p" >/dev/null 2>&1 || warn "Could not install $p via pkg."; if command -v "$c" >/dev/null 2>&1; then ok "$p installed"; else warn "$c still missing — will try fallback later if needed."; fi; fi; }
+install_package wget wget
+install_package zsh zsh
+install_package figlet figlet
+install_package eza eza
+install_package git git
+install_package unzip unzip
+
+# ── lolcat install (pkg → gem fallback) ──
+if command -v lolcat >/dev/null 2>&1; then
+    ok "lolcat installed"
+else
+    info "Installing lolcat..."
+    pkg install -y lolcat >/dev/null 2>&1 || true
+    if ! command -v lolcat >/dev/null 2>&1; then
+        info "pkg lolcat unavailable — installing via Ruby gem..."
+        pkg install -y ruby >/dev/null 2>&1 || warn "Could not install ruby."
+        if command -v gem >/dev/null 2>&1; then
+            gem install lolcat >/dev/null 2>&1 || warn "gem install lolcat failed."
+        fi
+    fi
+    if command -v lolcat >/dev/null 2>&1; then
+        ok "lolcat installed"
+    else
+        warn "lolcat not available — banner will print without rainbow."
+    fi
+fi
 
 # 4. Font Installation
 info "Installing Nerd Font..."
@@ -77,11 +102,9 @@ ok "Files downloaded."
 # 6. FIX DOUBLE BANNER: Completely rewrite .zshrc safely
 info "Rebuilding .zshrc cleanly..."
 ZRC="$HOME/.zshrc"
-# Backup existing .zshrc just in case
 if [ -f "$ZRC" ]; then
     cp "$ZRC" "$HOME/.zshrc.bak_$(date +%s)"
 fi
-# Create a fresh .zshrc with ONLY our block
 cat > "$ZRC" <<'BLOCK'
 # >>> THE-SHADOW-MANAGED >>>
 [[ -f "$HOME/.termux-shadow/config.zsh" ]] && source "$HOME/.termux-shadow/config.zsh"
