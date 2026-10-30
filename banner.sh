@@ -1,20 +1,43 @@
 #!/data/data/com.termux/files/usr/bin/bash
 set -u
-[[ -f "$HOME/.termux-shadow/settings" ]] && source "$HOME/.termux-shadow/settings"
-NAME="${BANNER_NAME:-MARK}"; BIO1="${BANNER_BIO1:-WE ARE THE GHOSTS BEHIND THE SCREEN}"; BIO2="${BANNER_BIO2:-SILENT, UNSEEN — BUT ALWAYS WATCHING}"; HEADLINE="${BANNER_HEADLINE:-We aRe ThE MuSk}"
-RED=$'\033[1;31m'; CYAN=$'\033[1;36m'; GREEN=$'\033[1;32m'; GRAY=$'\033[0;90m'; RESET=$'\033[0m'
-printf '\n%s < ━━━━━━━━━ [★] T E R M U X [★] ━━━━━━━━━━━━ > %s\n\n' "$CYAN" "$RESET"
-printf '%s %s %s\n\n' "$RED" "$HEADLINE" "$RESET"
-if command -v ping >/dev/null 2>&1 && ping -c 1 -W 2 8.8.8.8 >/dev/null 2>&1; then printf ' %s●%s Network Status: \033[1;32mONLINE\033[0m %s(Internet Active)%s\n\n' "$GREEN" "$RESET" "$GRAY" "$RESET"; else printf ' \033[1;31m●\033[0m Network Status: \033[1;31mOFFLINE\033[0m %s(Internet unavailable)%s\n\n' "$GRAY" "$RESET"; fi
-if command -v figlet >/dev/null 2>&1; then figlet -w 40 "$NAME" 2>/dev/null | while IFS= read -r line; do printf '%s%s%s\n' "$RED" "$line" "$RESET"; done; else printf '%s%s%s\n' "$RED" "$NAME" "$RESET"; fi
 
-# Rainbow Bio Lines
-printf '\n'
-if declare -f print_rainbow > /dev/null; then 
-    print_rainbow " $BIO1"
-    print_rainbow " $BIO2"
+[[ -f "$HOME/.termux-shadow/settings" ]] && source "$HOME/.termux-shadow/settings"
+
+NAME="${BANNER_NAME:-MARK}"
+BIO1="${BANNER_BIO1:-WE ARE THE GHOSTS BEHIND THE SCREEN}"
+BIO2="${BANNER_BIO2:-SILENT, UNSEEN — BUT ALWAYS WATCHING}"
+HEADLINE="${BANNER_HEADLINE:-We aRe ThE MuSk}"
+
+# lolcat helper — lolcat না থাকলে plain print
+lol() {
+    if command -v lolcat >/dev/null 2>&1; then
+        lolcat
+    else
+        cat
+    fi
+}
+
+echo
+echo " < ━━━━━━━━━ [★] T E R M U X [★] ━━━━━━━━━━━━ > " | lol
+echo
+echo " $HEADLINE" | lol
+
+# ── Network Status ──
+if ping -c 1 8.8.8.8 > /dev/null 2>&1; then
+    echo " ● Network Status: ONLINE (Internet Active)" | lol
 else
-    printf '%s %s%s\n%s %s%s\n' "$CYAN" "$BIO1" "$RESET" "$CYAN" "$BIO2" "$RESET"
+    echo " ● Network Status: OFFLINE (TERMINAL IS IN OFFLINE MOOD)" | lol
 fi
 
-printf '%s < ━━━━━━━━━━━ [★]~~~~~~~~~~~~~~~~~~~~~~~~~[★] ━━━━━━━━━━━━ > %s\n\n' "$GRAY" "$RESET"
+# ── Big Name (lolcat) ──
+if command -v figlet >/dev/null 2>&1; then
+    figlet " $NAME" | lol
+else
+    echo " $NAME" | lol
+fi
+
+# ── Bio Lines + footer (অরজিনালের মতো একসাথে) ──
+echo "
+$BIO1
+$BIO2
+< ━━━━━━━━━━━ [★]~~~~~~~~~~~~~~~~~~~~~~~~~[★] ━━━━━━━━━━━━ > " | lol
